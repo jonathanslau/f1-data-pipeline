@@ -1,0 +1,79 @@
+x-producer-common: &producer-common
+  build: ./producer
+  env_file: config.env
+  volumes:
+    - f1cache:/data/f1cache
+  depends_on:
+    init:
+      condition: service_completed_successfully
+    kafka:
+      condition: service_healthy
+  restart: "no"
+
+services:
+  kafka:
+    image: apache/kafka:3.9.2
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: f1-telemetry-cluster-001
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  init:
+    build: ./init
+    env_file: config.env
+    volumes:
+      - f1cache:/data/f1cache
+
+  producer-1:
+    <<: *producer-common
+    environment:
+      DRIVER_INDEX: 0
+
+  producer-2:
+    <<: *producer-common
+    environment:
+      DRIVER_INDEX: 1
+
+  producer-3:
+    <<: *producer-common
+    environment:
+      DRIVER_INDEX: 2
+
+  producer-4:
+    <<: *producer-common
+    environment:
+      DRIVER_INDEX: 3
+
+  producer-5:
+    <<: *producer-common
+    environment:
+      DRIVER_INDEX: 4
+
+  dashboard:
+    build: ./dashboard
+    env_file: config.env
+    ports:
+      - "8050:8050"
+    volumes:
+      - f1cache:/data/f1cache
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  f1cache:

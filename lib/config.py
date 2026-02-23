@@ -1,1 +1,0 @@
-RAW_BUCKET_NAME = 'fastf1-data-raw'
