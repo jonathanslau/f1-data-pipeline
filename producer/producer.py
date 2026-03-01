@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from confluent_kafka import Producer
 
-CACHE_DIR = "/data/f1cache"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CACHE_DIR = os.path.join(PROJECT_ROOT, "data", "f1cache")
 MANIFEST_PATH = os.path.join(CACHE_DIR, "manifest.json")
 
 KAFKA_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")

@@ -13,7 +13,9 @@ from telemetry_charts import build_speed_chart
 KAFKA_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 TELEMETRY_TOPIC = os.environ.get("KAFKA_TELEMETRY_TOPIC", "f1.telemetry")
 LAPS_TOPIC = os.environ.get("KAFKA_LAPS_TOPIC", "f1.laps")
-MANIFEST_PATH = "/data/f1cache/manifest.json"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CACHE_DIR = os.path.join(PROJECT_ROOT, "data", "f1cache")
+MANIFEST_PATH = os.path.join(CACHE_DIR, "manifest.json")
 
 MAX_HISTORY = 500
 REFRESH_MS = 500
@@ -40,7 +42,7 @@ if manifest:
 # --- Server-side state ---
 positions = {}  # driver_number -> latest {x, y, speed, abbreviation}
 telemetry_history = {}  # driver_number -> deque of samples
-lap_data = []  # list of lap event dicts
+lap_data = {}  # driver_number -> latest lap event dict
 
 consumer = TelemetryConsumer(
     bootstrap_servers=KAFKA_SERVERS,
@@ -101,7 +103,9 @@ def _poll_kafka():
         telemetry_history[drv].append(msg)
 
     for msg in lap_msgs:
-        lap_data.append(msg)
+        drv = msg.get("driver_number")
+        if drv is not None:
+            lap_data[drv] = msg
 
 
 @callback(
@@ -124,9 +128,9 @@ def update(_n):
             "abbreviation", "lap_number", "lap_time",
             "sector1", "sector2", "sector3", "compound", "position",
         ]
+        rows = sorted(lap_data.values(), key=lambda r: r.get("position", 99))
         # Filter to columns that exist
-        available = [c for c in cols if c in lap_data[0]]
-        rows = sorted(lap_data, key=lambda r: (-r.get("lap_number", 0), r.get("position", 99)))
+        available = [c for c in cols if c in rows[0]]
         table = dash_table.DataTable(
             data=[{c: r.get(c) for c in available} for r in rows],
             columns=[{"name": c.replace("_", " ").title(), "id": c} for c in available],
