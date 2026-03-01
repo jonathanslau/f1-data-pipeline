@@ -18,10 +18,12 @@ Replays historical F1 telemetry data (via FastF1) through Kafka, with one produc
 ```
 
 ## Quick Start
-
+### First Build or Code Changes
 ```bash
 docker compose up --build
+
 ```
+Otherwise, omit `--build` flag
 
 Then open http://localhost:8050
 
@@ -30,6 +32,8 @@ The init container downloads race data (~30-60s on first run), then 5 producers 
 - **Track map** with live driver positions
 - **Speed trace** chart per driver
 - **Lap data** table with times, sectors, and tyre compound
+
+![output.gif](output.gif)
 
 ## Configuration
 
