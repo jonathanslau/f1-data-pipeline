@@ -7,11 +7,12 @@ import sys
 import fastf1
 import numpy as np
 
-CACHE_DIR = "/data/f1cache"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CACHE_DIR = os.path.join(PROJECT_ROOT, "data", "f1cache")
 MANIFEST_PATH = os.path.join(CACHE_DIR, "manifest.json")
 
 SEASON = int(os.environ.get("F1_SEASON", 2024))
-EVENT = os.environ.get("F1_EVENT", "Monaco")
+EVENT = os.environ.get("F1_EVENT", "British Grand Prix")
 SESSION_TYPE = os.environ.get("F1_SESSION", "R")
 NUM_DRIVERS = int(os.environ.get("NUM_DRIVERS", 5))
 

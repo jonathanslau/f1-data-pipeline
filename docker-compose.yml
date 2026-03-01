@@ -2,7 +2,7 @@ x-producer-common: &producer-common
   build: ./producer
   env_file: config.env
   volumes:
-    - f1cache:/data/f1cache
+    - ./data/f1cache:/data/f1cache
   depends_on:
     init:
       condition: service_completed_successfully
@@ -37,7 +37,7 @@ services:
     build: ./init
     env_file: config.env
     volumes:
-      - f1cache:/data/f1cache
+      - ./data/f1cache:/data/f1cache
 
   producer-1:
     <<: *producer-common
@@ -70,10 +70,7 @@ services:
     ports:
       - "8050:8050"
     volumes:
-      - f1cache:/data/f1cache
+      - ./data/f1cache:/data/f1cache
     depends_on:
       kafka:
         condition: service_healthy
-
-volumes:
-  f1cache:

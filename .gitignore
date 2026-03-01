@@ -13,6 +13,7 @@ venv/
 # FastF1 cache
 cache/
 f1cache/
+data/
 
 # IDE
 .idea/
@@ -25,3 +26,6 @@ f1cache/
 # OS
 .DS_Store
 Thumbs.db
+
+# Adhoc
+*.ipynb
