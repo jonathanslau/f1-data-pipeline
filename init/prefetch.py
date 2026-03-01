@@ -15,6 +15,7 @@ SEASON = int(os.environ.get("F1_SEASON", 2024))
 EVENT = os.environ.get("F1_EVENT", "British Grand Prix")
 SESSION_TYPE = os.environ.get("F1_SESSION", "R")
 NUM_DRIVERS = int(os.environ.get("NUM_DRIVERS", 5))
+DRIVER_SORT = os.environ.get("DRIVER_SORT", "GridPosition")
 
 
 def main():
@@ -25,14 +26,14 @@ def main():
     session = fastf1.get_session(SEASON, EVENT, SESSION_TYPE)
     session.load(telemetry=True, laps=True, weather=False, messages=False)
 
-    # Pick top N finishers
+    # Pick top N drivers by configured sort column
     results = session.results
     if results is None or results.empty:
         print("ERROR: No results found for this session.", file=sys.stderr)
         sys.exit(1)
 
     top_drivers = (
-        results.sort_values("Position")
+        results.sort_values(DRIVER_SORT)
         .head(NUM_DRIVERS)
     )
 
@@ -43,6 +44,7 @@ def main():
             "abbreviation": row["Abbreviation"],
             "full_name": row["FullName"],
             "team": row["TeamName"],
+            "grid_position": int(row["GridPosition"]),
         })
 
     # Extract circuit coordinates from the fastest lap for track outline

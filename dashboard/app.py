@@ -30,6 +30,7 @@ except FileNotFoundError:
 
 driver_info_map = {}
 track_coords = {}
+initial_lap_data = {}
 if manifest:
     for d in manifest["drivers"]:
         driver_info_map[d["number"]] = {
@@ -37,12 +38,17 @@ if manifest:
             "full_name": d["full_name"],
             "team": d["team"],
         }
+        initial_lap_data[d["number"]] = {
+            "driver_number": d["number"],
+            "abbreviation": d["abbreviation"],
+            "grid_position": d.get("grid_position"),
+        }
     track_coords = manifest.get("track", {})
 
 # --- Server-side state ---
 positions = {}  # driver_number -> latest {x, y, speed, abbreviation}
 telemetry_history = {}  # driver_number -> deque of samples
-lap_data = {}  # driver_number -> latest lap event dict
+lap_data = dict(initial_lap_data)  # driver_number -> latest lap event dict
 
 consumer = TelemetryConsumer(
     bootstrap_servers=KAFKA_SERVERS,
@@ -105,6 +111,9 @@ def _poll_kafka():
     for msg in lap_msgs:
         drv = msg.get("driver_number")
         if drv is not None:
+            # Preserve grid_position from the initial seed
+            if drv in lap_data and "grid_position" in lap_data[drv]:
+                msg["grid_position"] = lap_data[drv]["grid_position"]
             lap_data[drv] = msg
 
 
@@ -125,10 +134,10 @@ def update(_n):
 
     if lap_data:
         cols = [
-            "abbreviation", "lap_number", "lap_time",
+            "abbreviation", "grid_position", "lap_number", "lap_time",
             "sector1", "sector2", "sector3", "compound", "position",
         ]
-        rows = sorted(lap_data.values(), key=lambda r: r.get("position", 99))
+        rows = sorted(lap_data.values(), key=lambda r: r.get("grid_position", 99))
         # Filter to columns that exist
         available = [c for c in cols if c in rows[0]]
         table = dash_table.DataTable(
